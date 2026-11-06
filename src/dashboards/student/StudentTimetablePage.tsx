@@ -1,19 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WeeklyTimetableGrid } from '../../components/timetable/WeeklyTimetableGrid';
 import { DailyTimetableList } from '../../components/timetable/DailyTimetableList';
 import { useAuth } from '../../hooks/useAuth';
 import { timetableService } from '../../services/timetableService';
+import { apiService } from '../../services/apiService';
 import { DAYS_OF_WEEK } from '../../utils/timeUtils';
-import { DayOfWeek } from '../../types';
-import { Calendar, Printer, Download, Sparkles } from 'lucide-react';
+import { DayOfWeek, TimetableEntry } from '../../types';
+import { Calendar, Printer, Download, Sparkles, RefreshCw } from 'lucide-react';
 
 export const StudentTimetablePage: React.FC = () => {
   const { session } = useAuth();
   const [viewMode, setViewMode] = useState<'weekly' | 'daily'>('weekly');
   const [activeDay, setActiveDay] = useState<DayOfWeek>('Monday');
 
-  const sectionId = session?.sectionId || 'sec-cse-3a';
-  const entries = timetableService.getStudentSchedule(sectionId);
+  const defaultSection = session?.sectionId || 'II AIML-J';
+  const [selectedSection, setSelectedSection] = useState(defaultSection);
+  const [sectionsList, setSectionsList] = useState<string[]>([]);
+
+  useEffect(() => {
+    apiService.getSections().then(secs => {
+      if (secs && secs.length) {
+        const unique = Array.from(new Set(secs.map(s => s.name))).sort();
+        setSectionsList(unique);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const [entries, setEntries] = useState<TimetableEntry[]>(() => timetableService.getStudentSchedule(selectedSection));
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchLiveEntries = () => {
+    setIsLoading(true);
+    apiService.getTimetables({ sectionId: selectedSection })
+      .then(res => {
+        if (res && res.length) {
+          setEntries(res);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchLiveEntries();
+  }, [selectedSection]);
 
   return (
     <div className="space-y-6">
@@ -22,12 +52,38 @@ export const StudentTimetablePage: React.FC = () => {
           <h1 className="text-2xl font-extrabold text-[#142B4A]">
             My Official Section Timetable
           </h1>
-          <p className="text-xs text-slate-500">
-            Assigned Section: <strong>CSE-3A</strong> • Academic Year 2026-2027 (Even Semester)
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-slate-500">Section:</span>
+            {sectionsList.length > 0 ? (
+              <select
+                value={selectedSection}
+                onChange={e => setSelectedSection(e.target.value)}
+                className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                {sectionsList.map(secName => (
+                  <option key={secName} value={secName}>
+                    {secName}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <strong className="text-xs text-blue-700">{selectedSection}</strong>
+            )}
+            <span className="text-xs text-slate-400">• Academic Year 2026-2027 (I Semester)</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={fetchLiveEntries}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 transition-colors"
+            title="Refresh from server"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+            <span>Sync</span>
+          </button>
+
           <div className="inline-flex rounded-xl bg-slate-200/80 p-1 text-xs font-bold">
             <button
               onClick={() => setViewMode('weekly')}
@@ -83,4 +139,3 @@ export const StudentTimetablePage: React.FC = () => {
     </div>
   );
 };
-

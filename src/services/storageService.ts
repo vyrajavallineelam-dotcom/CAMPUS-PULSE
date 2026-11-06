@@ -69,8 +69,10 @@ function setItem<T>(key: string, value: T): void {
 
 export const storageService = {
   initialize() {
-    if (!localStorage.getItem(STORAGE_KEYS.INITIALIZED)) {
+    const version = localStorage.getItem('campus_pulse_data_version');
+    if (!localStorage.getItem(STORAGE_KEYS.INITIALIZED) || version !== 'v2-acse') {
       this.resetAllToDemo();
+      localStorage.setItem('campus_pulse_data_version', 'v2-acse');
     }
   },
 

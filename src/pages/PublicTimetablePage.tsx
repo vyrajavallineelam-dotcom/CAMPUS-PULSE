@@ -105,9 +105,15 @@ export const PublicTimetablePage: React.FC = () => {
     loadInitialData();
   }, [loadInitialData]);
 
-  const filteredSections = sections.filter(
-    s => s.departmentId === selectedDeptId && s.yearOfStudy === Number(selectedYearOfStudy)
-  );
+  const filteredSections = sections.filter(s => {
+    const deptMatch =
+      !selectedDeptId ||
+      s.departmentId === selectedDeptId ||
+      s.departmentId.toLowerCase() === selectedDeptId.toLowerCase() ||
+      (selectedDeptId === 'dept-acse' && s.departmentId === 'ACSE') ||
+      (selectedDeptId === 'ACSE' && s.departmentId === 'dept-acse');
+    return deptMatch && s.yearOfStudy === Number(selectedYearOfStudy);
+  });
 
   const handleQuery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

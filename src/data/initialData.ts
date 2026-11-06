@@ -14,6 +14,15 @@ import {
   UserNotification
 } from '../types';
 
+import {
+  ACSE_DEPARTMENT,
+  ACSE_SECTIONS,
+  ACSE_FACULTY,
+  ACSE_SUBJECTS,
+  ACSE_TIMETABLES
+} from './acseTimetableData';
+
+
 export const INITIAL_BUILDINGS: Building[] = [
   {
     id: 'bldg-1',
@@ -83,6 +92,7 @@ export const INITIAL_BUILDINGS: Building[] = [
 ];
 
 export const INITIAL_DEPARTMENTS: Department[] = [
+  ACSE_DEPARTMENT,
   {
     id: 'dept-cse',
     code: 'CSE',
@@ -191,6 +201,7 @@ export const INITIAL_SEMESTERS: Semester[] = [
 ];
 
 export const INITIAL_SECTIONS: Section[] = [
+  ...ACSE_SECTIONS,
   {
     id: 'sec-cse-3a',
     name: 'CSE-3A',
@@ -234,6 +245,7 @@ export const INITIAL_SECTIONS: Section[] = [
 ];
 
 export const INITIAL_SUBJECTS: Subject[] = [
+  ...ACSE_SUBJECTS,
   {
     id: 'sub-ml',
     code: '21CS301',
@@ -309,6 +321,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
 ];
 
 export const INITIAL_FACULTY: Faculty[] = [
+  ...ACSE_FACULTY,
   {
     id: 'fac-1',
     facultyId: 'VFSTR-FAC-101',
@@ -1047,6 +1060,7 @@ export const INITIAL_ROOMS: Room[] = [
 // P8: 15:30 - 16:20
 
 export const INITIAL_TIMETABLES: TimetableEntry[] = [
+  ...ACSE_TIMETABLES,
   // MONDAY - Section CSE-3A
   {
     id: 'tt-1',

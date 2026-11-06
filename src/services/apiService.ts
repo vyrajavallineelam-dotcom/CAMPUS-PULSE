@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient';
 import { tokenStorage } from './tokenStorage';
+import { storageService } from './storageService';
 import {
   Building,
   Floor,
@@ -91,15 +92,42 @@ export const apiService = {
     facultyId?: string;
     day?: string;
   }): Promise<TimetableEntry[]> {
-    const query = new URLSearchParams();
-    if (params?.departmentId) query.append('departmentId', params.departmentId);
-    if (params?.academicYearId) query.append('academicYearId', params.academicYearId);
-    if (params?.semesterId) query.append('semesterId', params.semesterId);
-    if (params?.sectionId) query.append('sectionId', params.sectionId);
-    if (params?.facultyId) query.append('facultyId', params.facultyId);
-    if (params?.day) query.append('day', params.day);
-    const qs = query.toString() ? `?${query.toString()}` : '';
-    return apiClient.get<TimetableEntry[]>(`/api/timetables${qs}`, { requiresAuth: false });
+    try {
+      const query = new URLSearchParams();
+      if (params?.departmentId) query.append('departmentId', params.departmentId);
+      if (params?.academicYearId) query.append('academicYearId', params.academicYearId);
+      if (params?.semesterId) query.append('semesterId', params.semesterId);
+      if (params?.sectionId) query.append('sectionId', params.sectionId);
+      if (params?.facultyId) query.append('facultyId', params.facultyId);
+      if (params?.day) query.append('day', params.day);
+      const qs = query.toString() ? `?${query.toString()}` : '';
+      const remote = await apiClient.get<TimetableEntry[]>(`/api/timetables${qs}`, { requiresAuth: false });
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        return remote;
+      }
+    } catch {
+      // Backend offline or returned error
+    }
+
+    // Seamless fallback to integrated ACSE and local storage
+    let local = storageService.getTimetables();
+    if (params?.sectionId) {
+      const sId = params.sectionId.trim().toLowerCase();
+      local = local.filter(t => t.sectionId.trim().toLowerCase() === sId);
+    }
+    if (params?.facultyId) {
+      const fId = params.facultyId.trim().toLowerCase();
+      local = local.filter(t => t.facultyId.trim().toLowerCase() === fId);
+    }
+    if (params?.day) {
+      const d = params.day.trim().toLowerCase();
+      local = local.filter(t => t.day.trim().toLowerCase() === d);
+    }
+    if (params?.departmentId) {
+      const dept = params.departmentId.trim().toLowerCase();
+      local = local.filter(t => t.departmentId.trim().toLowerCase() === dept);
+    }
+    return local;
   },
 
   async getStudentSchedule(sectionId: string): Promise<TimetableEntry[]> {
@@ -135,7 +163,16 @@ export const apiService = {
 
   // ==================== ACADEMIC STRUCTURE ====================
   async getDepartments(): Promise<Department[]> {
-    return apiClient.get<Department[]>('/api/departments', { requiresAuth: false });
+    try {
+      const remote = await apiClient.get<Department[]>('/api/departments', { requiresAuth: false });
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        const local = storageService.getDepartments();
+        const existingCodes = new Set(remote.map(d => d.code?.toUpperCase()));
+        const missing = local.filter(d => !existingCodes.has(d.code?.toUpperCase()));
+        return [...remote, ...missing];
+      }
+    } catch {}
+    return storageService.getDepartments();
   },
 
   async getAcademicYears(): Promise<AcademicYear[]> {
@@ -147,7 +184,16 @@ export const apiService = {
   },
 
   async getSections(): Promise<Section[]> {
-    return apiClient.get<Section[]>('/api/sections', { requiresAuth: false });
+    try {
+      const remote = await apiClient.get<Section[]>('/api/sections', { requiresAuth: false });
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        const local = storageService.getSections();
+        const existingNames = new Set(remote.map(s => s.name?.toUpperCase()));
+        const missing = local.filter(s => !existingNames.has(s.name?.toUpperCase()));
+        return [...remote, ...missing];
+      }
+    } catch {}
+    return storageService.getSections();
   },
 
   async getSubjects(): Promise<Subject[]> {
@@ -155,7 +201,16 @@ export const apiService = {
   },
 
   async getFaculty(): Promise<Faculty[]> {
-    return apiClient.get<Faculty[]>('/api/faculty', { requiresAuth: false });
+    try {
+      const remote = await apiClient.get<Faculty[]>('/api/faculty', { requiresAuth: false });
+      if (remote && Array.isArray(remote) && remote.length > 0) {
+        const local = storageService.getFaculty();
+        const existingNames = new Set(remote.map(f => f.name?.toUpperCase()));
+        const missing = local.filter(f => !existingNames.has(f.name?.toUpperCase()));
+        return [...remote, ...missing];
+      }
+    } catch {}
+    return storageService.getFaculty();
   },
 
   async getStudents(): Promise<Student[]> {

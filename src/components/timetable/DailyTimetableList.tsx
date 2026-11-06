@@ -119,18 +119,18 @@ export const DailyTimetableList: React.FC<DailyTimetableListProps> = ({
                   </div>
 
                   <h4 className="text-base font-bold text-slate-900">
-                    {subj?.name || 'Class Subject'}
+                    {subj?.name || entry.subjectId || 'Class Subject'}
                   </h4>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 pt-1">
                     <div className="flex items-center gap-1.5 font-medium text-slate-800">
                       <User className="w-3.5 h-3.5 text-blue-600" />
-                      <span>{fac?.name || 'Faculty Member'}</span>
+                      <span>{fac?.name || entry.facultyId || 'Faculty Member'}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 font-mono text-blue-700 font-semibold">
                       <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                      <span>{room?.roomNumber}</span>
+                      <span>{room?.roomNumber || entry.roomId || 'Unallocated Room'}</span>
                       <span className="text-slate-500 font-sans text-xs">
                         ({bldg?.name} • {flr?.name})
                       </span>
